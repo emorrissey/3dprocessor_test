@@ -16,7 +16,7 @@ const FEATURE_DATA = [
       "Responsive foreground work, parallel throughput, and efficient everyday tasks in one mobile processor.",
     proof:
       "The local product brief lists next-gen P-cores, E-cores, and Low Power E-cores with up to 16 total cores on leading SKUs.",
-    position: [-1.42, 0.86, 0.72],
+    position: [-1.72, 0.98, 0.54],
     angle: -0.7,
     color: "#00c7fd",
   },
@@ -31,7 +31,7 @@ const FEATURE_DATA = [
       "Premium integrated graphics for thin and light systems, creative workflows, AI, and smoother gaming.",
     proof:
       "Intel publishes Series 3 SKUs with Intel Arc B390 GPU options, up to 12 Xe-cores, and GPU AI acceleration.",
-    position: [1.16, 0.9, 0.64],
+    position: [1.34, 0.98, 0.48],
     angle: 0.7,
     color: "#7dfc89",
   },
@@ -46,7 +46,7 @@ const FEATURE_DATA = [
       "A richer on-the-go play story: higher perceived frame rates, smoother motion, and lower latency when supported.",
     proof:
       "The brief describes XeSS 3 as a package of AI-driven Super Resolution, Multi-Frame Generation, and Xe Low Latency.",
-    position: [1.95, 0.82, -0.48],
+    position: [2.3, 0.94, -0.48],
     angle: 1.18,
     color: "#f6d84f",
   },
@@ -61,7 +61,7 @@ const FEATURE_DATA = [
       "Keeps AI assistive work local and efficient, saving battery for workflows that should not need the cloud.",
     proof:
       "Intel positions the Series 3 NPU as low power, ideal for sustained AI workloads and AI offload for battery life.",
-    position: [-0.22, 1.02, -0.18],
+    position: [-0.18, 1.04, -0.2],
     angle: -0.08,
     color: "#8d7cff",
   },
@@ -76,7 +76,7 @@ const FEATURE_DATA = [
       "Routes work to the right engine: GPU for throughput, NPU for sustained efficiency, CPU for fast response.",
     proof:
       "Intel cites a broad AI ecosystem with hundreds of ISVs, accelerated features, and supported AI models.",
-    position: [0.1, 1.32, 0.92],
+    position: [0.16, 1.34, 0.9],
     angle: 0.0,
     color: "#00f0b5",
   },
@@ -91,7 +91,7 @@ const FEATURE_DATA = [
       "Premium laptop designs stay responsive on battery, wake quickly, and stretch play or creative sessions longer.",
     proof:
       "Intel describes Evo verification across performance, battery life, connectivity, audio, visual quality, size, and weight.",
-    position: [-1.8, 0.78, -0.78],
+    position: [-1.92, 0.86, -0.9],
     angle: -1.12,
     color: "#ff9d42",
   },
@@ -106,7 +106,7 @@ const FEATURE_DATA = [
       "High-speed docks, displays, storage, sharing, streaming, collaboration, and gaming with less friction.",
     proof:
       "The brief lists Thunderbolt 5 support, integrated Thunderbolt 4 ports, Wi-Fi 7 R2, and Dual Bluetooth Core 6.0.",
-    position: [2.26, 0.66, 1.0],
+    position: [2.88, 0.82, 0.88],
     angle: 1.4,
     color: "#52d6ff",
   },
@@ -121,7 +121,7 @@ const FEATURE_DATA = [
       "Brings integrated CPU, GPU, and NPU acceleration to robotics, retail, healthcare, smart cities, and automation.",
     proof:
       "Intel says select Series 3 edge processors support embedded and industrial use cases, including extended temperature ranges.",
-    position: [-2.18, 0.66, 0.04],
+    position: [-2.88, 0.82, 0.02],
     angle: -1.62,
     color: "#ff6b6b",
   },
@@ -130,6 +130,11 @@ const FEATURE_DATA = [
 type Feature = (typeof FEATURE_DATA)[number];
 type FeatureId = Feature["id"];
 type FocusMode = "all" | "cores" | "ai" | "graphics" | "platform";
+type LayerPart = {
+  object: THREE.Object3D;
+  compactY: number;
+  explodedY: number;
+};
 
 const STAT_RAIL = [
   ["Intel 18A", "first AI PC platform built on Intel 18A"],
@@ -455,7 +460,7 @@ function ChipScene({
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 80);
-    camera.position.set(0, 3.2, 8.4);
+    camera.position.set(0, 3.2, 8.8);
 
     const root = new THREE.Group();
     root.rotation.x = -0.48;
@@ -477,17 +482,28 @@ function ChipScene({
     fill.position.set(-2.8, 2.8, 3.4);
     scene.add(fill);
 
-    const baseMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x06101e,
+    const substrateMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x050a12,
       metalness: 0.82,
-      roughness: 0.34,
-      clearcoat: 0.55,
-      clearcoatRoughness: 0.18,
+      roughness: 0.38,
+      clearcoat: 0.44,
+      clearcoatRoughness: 0.22,
     });
-    const bevelMaterial = new THREE.MeshStandardMaterial({
-      color: 0x526172,
+    const edgeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x6d7988,
       metalness: 0.95,
       roughness: 0.2,
+    });
+    const lidMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xaebbc6,
+      metalness: 0.96,
+      roughness: 0.22,
+      clearcoat: 0.28,
+    });
+    const deckMaterial = new THREE.MeshStandardMaterial({
+      color: 0x071324,
+      metalness: 0.38,
+      roughness: 0.24,
     });
     const dieMaterial = new THREE.MeshPhysicalMaterial({
       color: 0x003f9f,
@@ -500,71 +516,157 @@ function ChipScene({
       transparent: true,
       opacity: 0.92,
     });
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x114dff,
+      emissive: 0x0528a5,
+      emissiveIntensity: 0.8,
+      metalness: 0.1,
+      roughness: 0.06,
+      clearcoat: 1,
+      transparent: true,
+      opacity: 0.72,
+    });
     const traceMaterial = new THREE.LineBasicMaterial({
       color: 0x00c7fd,
       transparent: true,
       opacity: 0.36,
     });
+    const etchedTraceMaterial = new THREE.LineBasicMaterial({
+      color: 0x9deeff,
+      transparent: true,
+      opacity: 0.34,
+    });
 
-    const base = new THREE.Mesh(roundedPackageGeometry(5.8, 3.72, 0.28, 0.35), [
-      baseMaterial,
-      bevelMaterial,
+    const packageWidth = 6.5;
+    const packageDepth = 3.25;
+    const packageBody = new THREE.Mesh(roundedPackageGeometry(packageWidth, packageDepth, 0.22, 0.2), [
+      substrateMaterial,
+      edgeMaterial,
     ]);
-    root.add(base);
+    root.add(packageBody);
 
-    const die = new THREE.Mesh(roundedPackageGeometry(3.72, 2.3, 0.16, 0.16), dieMaterial);
-    die.position.y = 0.3;
+    const lid = new THREE.Group();
+    lid.position.y = 0.24;
+    const outerWidth = 5.9;
+    const outerDepth = 2.62;
+    const openingWidth = 2.96;
+    const openingDepth = 1.56;
+    const bar = 0.26;
+    const topBar = new THREE.Mesh(
+      new THREE.BoxGeometry(outerWidth, 0.08, bar),
+      lidMaterial,
+    );
+    topBar.position.z = outerDepth / 2 - bar / 2;
+    lid.add(topBar);
+    const bottomBar = topBar.clone();
+    bottomBar.position.z = -outerDepth / 2 + bar / 2;
+    lid.add(bottomBar);
+    const leftBar = new THREE.Mesh(
+      new THREE.BoxGeometry(bar, 0.08, openingDepth),
+      lidMaterial,
+    );
+    leftBar.position.x = -openingWidth / 2 - bar / 2;
+    lid.add(leftBar);
+    const rightBar = leftBar.clone();
+    rightBar.position.x = openingWidth / 2 + bar / 2;
+    lid.add(rightBar);
+    root.add(lid);
+
+    const dieDeck = new THREE.Mesh(
+      roundedPackageGeometry(3.08, 1.66, 0.055, 0.09),
+      deckMaterial,
+    );
+    dieDeck.position.y = 0.31;
+    root.add(dieDeck);
+
+    const interposer = new THREE.Mesh(
+      roundedPackageGeometry(2.66, 1.38, 0.08, 0.08),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x0c58cc,
+        emissive: 0x073189,
+        emissiveIntensity: 0.38,
+        metalness: 0.24,
+        roughness: 0.12,
+        clearcoat: 0.8,
+        transparent: true,
+        opacity: 0.82,
+      }),
+    );
+    interposer.position.y = 0.4;
+    root.add(interposer);
+
+    const die = new THREE.Mesh(roundedPackageGeometry(2.32, 1.18, 0.12, 0.07), dieMaterial);
+    die.position.y = 0.48;
     root.add(die);
 
     const glass = new THREE.Mesh(
-      roundedPackageGeometry(2.72, 1.46, 0.04, 0.1),
-      new THREE.MeshPhysicalMaterial({
-        color: 0x114dff,
-        emissive: 0x0528a5,
-        emissiveIntensity: 0.8,
-        metalness: 0.1,
-        roughness: 0.06,
-        clearcoat: 1,
-        transparent: true,
-        opacity: 0.72,
-      }),
+      roundedPackageGeometry(2.08, 1.0, 0.035, 0.06),
+      glassMaterial,
     );
-    glass.position.y = 0.43;
+    glass.position.y = 0.6;
     root.add(glass);
 
     const topMark = makeLabelSprite("CORE ULTRA", "#ffffff", "#071126");
-    topMark.position.set(0, 0.58, -1.1);
-    topMark.scale.set(1.12, 0.3, 1);
+    topMark.position.set(0, 0.76, -0.74);
+    topMark.scale.set(1.24, 0.36, 1);
     root.add(topMark);
 
-    const layerParts: Array<{
-      object: THREE.Object3D;
-      compactY: number;
-      explodedY: number;
-    }> = [
-      { object: base, compactY: 0, explodedY: -0.2 },
-      { object: die, compactY: 0.3, explodedY: 0.56 },
-      { object: glass, compactY: 0.43, explodedY: 0.9 },
-      { object: topMark, compactY: 0.58, explodedY: 1.2 },
+    const dieTraces = makeTraceGrid(2.08, 1.0, 8, 6, etchedTraceMaterial);
+    dieTraces.position.y = 0.64;
+    root.add(dieTraces);
+
+    const substrateTraces = makeTraceGrid(5.62, 2.28, 13, 8, traceMaterial);
+    substrateTraces.position.y = 0.18;
+    root.add(substrateTraces);
+
+    const layerParts: LayerPart[] = [
+      { object: packageBody, compactY: 0, explodedY: -0.24 },
+      { object: lid, compactY: 0.24, explodedY: 0.12 },
+      { object: dieDeck, compactY: 0.31, explodedY: 0.44 },
+      { object: interposer, compactY: 0.4, explodedY: 0.7 },
+      { object: die, compactY: 0.48, explodedY: 0.94 },
+      { object: glass, compactY: 0.6, explodedY: 1.26 },
+      { object: dieTraces, compactY: 0.64, explodedY: 1.32 },
+      { object: substrateTraces, compactY: 0.18, explodedY: 0.16 },
+      { object: topMark, compactY: 0.76, explodedY: 1.58 },
     ];
 
     const contacts = new THREE.Group();
     root.add(contacts);
-    for (let index = 0; index < 34; index += 1) {
-      const x = -2.72 + index * (5.44 / 33);
-      addContact(contacts, x, -1.98, 0);
-      addContact(contacts, x, 1.98, 0);
+    for (let index = 0; index < 38; index += 1) {
+      const x = -3.02 + index * (6.04 / 37);
+      addContact(contacts, x, -1.72, 0);
+      addContact(contacts, x, 1.72, 0);
     }
-    for (let index = 0; index < 22; index += 1) {
-      const z = -1.68 + index * (3.36 / 21);
-      addContact(contacts, -3.0, z, Math.PI / 2);
-      addContact(contacts, 3.0, z, Math.PI / 2);
+    for (let index = 0; index < 18; index += 1) {
+      const z = -1.34 + index * (2.68 / 17);
+      addContact(contacts, -3.38, z, Math.PI / 2);
+      addContact(contacts, 3.38, z, Math.PI / 2);
     }
+    layerParts.push({ object: contacts, compactY: 0, explodedY: -0.1 });
+
+    const fiducials = new THREE.Group();
+    const fiducialGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.028, 28);
+    const fiducialMaterial = new THREE.MeshStandardMaterial({
+      color: 0xcaa456,
+      metalness: 0.9,
+      roughness: 0.24,
+    });
+    for (const x of [-2.92, 2.92]) {
+      for (const z of [-1.36, 1.36]) {
+        const fiducial = new THREE.Mesh(fiducialGeometry, fiducialMaterial);
+        fiducial.position.set(x, 0.25, z);
+        fiducials.add(fiducial);
+      }
+    }
+    root.add(fiducials);
+    layerParts.push({ object: fiducials, compactY: 0, explodedY: 0.08 });
 
     const tracePositions: number[] = [];
     const zoneGroups = new Map<FeatureId, THREE.Mesh[]>();
     const labelSprites = new Map<FeatureId, THREE.Sprite>();
     const hotspots: THREE.Mesh[] = [];
+    const interactiveTargets: THREE.Object3D[] = [];
 
     const featureMaterials = new Map(
       FEATURE_DATA.map((feature) => [
@@ -580,13 +682,20 @@ function ChipScene({
     );
 
     buildCoreArray(root, zoneGroups, featureMaterials, layerParts);
-    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "arc", 1.1, 0.02, 1.35, 1.05);
-    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "xess", 1.95, -0.72, 0.7, 0.55);
-    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "npu", -0.26, -0.22, 1.02, 0.74);
-    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "triEngine", 0.02, 0.78, 1.18, 0.5);
-    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "mobility", -1.55, -0.82, 0.86, 0.62);
-    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "connectivity", 2.16, 0.96, 0.64, 0.42);
-    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "edge", -2.18, 0.02, 0.48, 1.3);
+    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "arc", 1.24, 0.3, 1.24, 0.82);
+    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "xess", 2.18, -0.56, 0.82, 0.42);
+    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "npu", -0.18, -0.26, 0.88, 0.56);
+    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "triEngine", 0.02, 0.88, 1.02, 0.34);
+    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "mobility", -1.82, -0.86, 0.86, 0.34);
+    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "connectivity", 2.78, 0.9, 0.54, 0.34);
+    buildFeatureBlock(root, zoneGroups, featureMaterials, layerParts, "edge", -2.82, 0.02, 0.36, 1.34);
+
+    for (const [featureId, meshes] of zoneGroups) {
+      for (const mesh of meshes) {
+        mesh.userData.featureId = featureId;
+        interactiveTargets.push(mesh);
+      }
+    }
 
     for (const feature of FEATURE_DATA) {
       const position = new THREE.Vector3(...feature.position);
@@ -607,6 +716,7 @@ function ChipScene({
       hotspot.userData.featureId = feature.id;
       root.add(hotspot);
       hotspots.push(hotspot);
+      interactiveTargets.push(hotspot);
 
       const ring = new THREE.Mesh(
         new THREE.TorusGeometry(0.18, 0.012, 10, 64),
@@ -620,15 +730,18 @@ function ChipScene({
       ring.rotation.x = Math.PI / 2;
       ring.userData.featureId = feature.id;
       root.add(ring);
+      interactiveTargets.push(ring);
 
       const label = makeLabelSprite(feature.label, feature.color, "#071126");
-      label.position.copy(position).add(new THREE.Vector3(0, 0.38, 0));
-      label.scale.set(1.05, 0.28, 1);
+      label.position.copy(position).add(new THREE.Vector3(0, 0.44, 0));
+      label.scale.set(1.48, 0.4, 1);
+      label.userData.featureId = feature.id;
       root.add(label);
       labelSprites.set(feature.id, label);
+      interactiveTargets.push(label);
 
       const edge = new THREE.Vector3(
-        Math.sign(position.x || 1) * 2.55,
+        Math.sign(position.x || 1) * 3.08,
         0.48,
         position.z * 0.84,
       );
@@ -689,7 +802,7 @@ function ChipScene({
     let animationId = 0;
     let targetRotationX = -0.48;
     let targetRotationY = -0.7;
-    let cameraTargetZ = 8.4;
+    let cameraTargetZ = 8.8;
     let isDragging = false;
     let dragMoved = false;
     let pointerStartX = 0;
@@ -698,6 +811,7 @@ function ChipScene({
     let previousY = 0;
     let lastActiveId: FeatureId = stateRef.current.activeId;
     let lastResetSignal = stateRef.current.resetSignal;
+    const rootTargetScale = new THREE.Vector3(1, 1, 1);
 
     const resize = () => {
       const width = mount.clientWidth;
@@ -720,7 +834,7 @@ function ChipScene({
     const pickHotspot = (event: PointerEvent) => {
       setPointerFromEvent(event);
       raycaster.setFromCamera(pointer, camera);
-      const intersections = raycaster.intersectObjects(hotspots, false);
+      const intersections = raycaster.intersectObjects(interactiveTargets, false);
       return intersections[0]?.object.userData.featureId as FeatureId | undefined;
     };
 
@@ -784,8 +898,8 @@ function ChipScene({
       event.preventDefault();
       cameraTargetZ = THREE.MathUtils.clamp(
         cameraTargetZ + event.deltaY * 0.004,
-        5.8,
-        10.2,
+        6.4,
+        11.2,
       );
     };
 
@@ -812,7 +926,7 @@ function ChipScene({
       if (lastResetSignal !== current.resetSignal) {
         targetRotationY = -0.7;
         targetRotationX = -0.48;
-        cameraTargetZ = 8.4;
+        cameraTargetZ = 8.8;
         lastResetSignal = current.resetSignal;
       }
 
@@ -824,7 +938,14 @@ function ChipScene({
         (targetRotationY + (current.exploded ? 0.12 : 0) - root.rotation.y) *
         0.072;
       root.rotation.x += (targetRotationX - root.rotation.x) * 0.075;
-      camera.position.z += (cameraTargetZ - camera.position.z) * 0.08;
+      const compactViewport = mount.clientWidth < 560;
+      const midViewport = mount.clientWidth >= 560 && mount.clientWidth < 900;
+      const targetScale = compactViewport ? 0.84 : midViewport ? 0.94 : 1;
+      rootTargetScale.set(targetScale, targetScale, targetScale);
+      root.scale.lerp(rootTargetScale, 0.08);
+      camera.position.z +=
+        (cameraTargetZ + (compactViewport ? 1.45 : 0) - camera.position.z) *
+        0.08;
       camera.lookAt(0, 0.26, 0);
 
       fill.intensity = 22 + Math.sin(elapsed * 1.7) * 4;
@@ -879,7 +1000,17 @@ function ChipScene({
         const label = labelSprites.get(feature.id);
         if (label) {
           const material = label.material as THREE.SpriteMaterial;
-          material.opacity = isActive ? 1 : isFocused ? 0.52 : 0.16;
+          material.opacity = isActive ? 1 : compactViewport ? 0.18 : isFocused ? 0.62 : 0.18;
+          const labelScale = compactViewport ? 1.22 : 1.48;
+          const activeBoost = isActive ? 1.12 : 1;
+          label.scale.lerp(
+            new THREE.Vector3(
+              labelScale * activeBoost,
+              labelScale * 0.27 * activeBoost,
+              1,
+            ),
+            0.09,
+          );
         }
       }
 
@@ -928,6 +1059,7 @@ function ChipScene({
         <strong>
           {FEATURE_DATA.find((feature) => feature.id === activeId)?.label}
         </strong>
+        <small>Core Ultra X9 388H reference package: 50 mm x 25 mm.</small>
       </div>
     </div>
   );
@@ -964,6 +1096,40 @@ function roundedPackageGeometry(
   return geometry;
 }
 
+function makeTraceGrid(
+  width: number,
+  depth: number,
+  columns: number,
+  rows: number,
+  material: THREE.LineBasicMaterial,
+) {
+  const positions: number[] = [];
+  const xMin = -width / 2;
+  const xMax = width / 2;
+  const zMin = -depth / 2;
+  const zMax = depth / 2;
+
+  for (let index = 0; index <= columns; index += 1) {
+    const x = xMin + (width * index) / columns;
+    const inset = index % 3 === 0 ? 0.12 : 0.28;
+    positions.push(x, 0, zMin + inset, x, 0, zMax - inset);
+  }
+
+  for (let index = 0; index <= rows; index += 1) {
+    const z = zMin + (depth * index) / rows;
+    const inset = index % 2 === 0 ? 0.18 : 0.36;
+    positions.push(xMin + inset, 0, z, xMax - inset, 0, z);
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(positions, 3),
+  );
+
+  return new THREE.LineSegments(geometry, material);
+}
+
 function addContact(group: THREE.Group, x: number, z: number, rotation: number) {
   const contact = new THREE.Mesh(
     new THREE.BoxGeometry(0.18, 0.04, 0.048),
@@ -982,7 +1148,7 @@ function buildCoreArray(
   root: THREE.Group,
   zoneGroups: Map<FeatureId, THREE.Mesh[]>,
   materials: Map<FeatureId, THREE.MeshStandardMaterial>,
-  layerParts: Array<{ object: THREE.Object3D; compactY: number; explodedY: number }>,
+  layerParts: LayerPart[],
 ) {
   const material = materials.get("architecture");
   if (!material) {
@@ -990,19 +1156,30 @@ function buildCoreArray(
   }
 
   const meshes: THREE.Mesh[] = [];
-  const geometry = new THREE.BoxGeometry(0.42, 0.16, 0.34);
+  const coreSpecs = [
+    { countX: 2, countZ: 2, sizeX: 0.34, sizeZ: 0.28, gapX: 0.09, gapZ: 0.09, startX: -1.82, startZ: 0.46 },
+    { countX: 4, countZ: 2, sizeX: 0.22, sizeZ: 0.22, gapX: 0.055, gapZ: 0.06, startX: -1.28, startZ: 0.46 },
+    { countX: 4, countZ: 1, sizeX: 0.18, sizeZ: 0.2, gapX: 0.05, gapZ: 0, startX: -1.84, startZ: -0.46 },
+  ];
 
-  for (let row = 0; row < 3; row += 1) {
-    for (let column = 0; column < 4; column += 1) {
-      const core = new THREE.Mesh(geometry, material);
-      core.position.set(-1.45 + column * 0.48, 0.56, 0.72 - row * 0.42);
-      root.add(core);
-      meshes.push(core);
-      layerParts.push({
-        object: core,
-        compactY: core.position.y,
-        explodedY: core.position.y + 0.68,
-      });
+  for (const spec of coreSpecs) {
+    const geometry = new THREE.BoxGeometry(spec.sizeX, 0.13, spec.sizeZ);
+    for (let row = 0; row < spec.countZ; row += 1) {
+      for (let column = 0; column < spec.countX; column += 1) {
+        const core = new THREE.Mesh(geometry, material);
+        core.position.set(
+          spec.startX + column * (spec.sizeX + spec.gapX),
+          0.72,
+          spec.startZ - row * (spec.sizeZ + spec.gapZ),
+        );
+        root.add(core);
+        meshes.push(core);
+        layerParts.push({
+          object: core,
+          compactY: core.position.y,
+          explodedY: core.position.y + 0.82,
+        });
+      }
     }
   }
 
@@ -1013,7 +1190,7 @@ function buildFeatureBlock(
   root: THREE.Group,
   zoneGroups: Map<FeatureId, THREE.Mesh[]>,
   materials: Map<FeatureId, THREE.MeshStandardMaterial>,
-  layerParts: Array<{ object: THREE.Object3D; compactY: number; explodedY: number }>,
+  layerParts: LayerPart[],
   featureId: FeatureId,
   x: number,
   z: number,
@@ -1026,34 +1203,65 @@ function buildFeatureBlock(
   }
 
   const meshes: THREE.Mesh[] = [];
+  const segments = featureId === "arc" ? 12 : featureId === "npu" ? 9 : 1;
+  if (segments > 1) {
+    const countX = featureId === "arc" ? 4 : 3;
+    const countZ = featureId === "arc" ? 3 : 3;
+    const gap = 0.045;
+    const tileWidth = (width - gap * (countX - 1)) / countX;
+    const tileDepth = (depth - gap * (countZ - 1)) / countZ;
+    const geometry = new THREE.BoxGeometry(tileWidth, 0.15, tileDepth);
+
+    for (let row = 0; row < countZ; row += 1) {
+      for (let column = 0; column < countX; column += 1) {
+        const tile = new THREE.Mesh(geometry, material);
+        tile.position.set(
+          x - width / 2 + tileWidth / 2 + column * (tileWidth + gap),
+          0.72,
+          z + depth / 2 - tileDepth / 2 - row * (tileDepth + gap),
+        );
+        root.add(tile);
+        meshes.push(tile);
+        layerParts.push({
+          object: tile,
+          compactY: tile.position.y,
+          explodedY: tile.position.y + 0.82,
+        });
+      }
+    }
+
+    zoneGroups.set(featureId, meshes);
+    return;
+  }
+
   const block = new THREE.Mesh(
-    new THREE.BoxGeometry(width, 0.18, depth),
+    new THREE.BoxGeometry(width, 0.15, depth),
     material,
   );
-  block.position.set(x, 0.58, z);
+  block.position.set(x, 0.72, z);
   root.add(block);
   meshes.push(block);
   layerParts.push({
     object: block,
     compactY: block.position.y,
-    explodedY: block.position.y + 0.72,
+    explodedY: block.position.y + 0.82,
   });
 
   const inset = new THREE.Mesh(
-    new THREE.BoxGeometry(Math.max(width - 0.18, 0.18), 0.035, Math.max(depth - 0.18, 0.18)),
+    new THREE.BoxGeometry(Math.max(width - 0.16, 0.16), 0.035, Math.max(depth - 0.16, 0.16)),
     new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
       opacity: 0.18,
     }),
   );
-  inset.position.set(x, 0.69, z);
+  inset.position.set(x, 0.83, z);
   root.add(inset);
   meshes.push(inset);
   layerParts.push({
     object: inset,
     compactY: inset.position.y,
-    explodedY: inset.position.y + 0.72,
+    explodedY: inset.position.y + 0.82,
   });
 
   zoneGroups.set(featureId, meshes);
@@ -1061,25 +1269,29 @@ function buildFeatureBlock(
 
 function makeLabelSprite(text: string, accent: string, background: string) {
   const canvas = document.createElement("canvas");
-  canvas.width = 768;
-  canvas.height = 192;
+  canvas.width = 1024;
+  canvas.height = 256;
   const context = canvas.getContext("2d");
 
   if (context) {
     context.clearRect(0, 0, canvas.width, canvas.height);
+    context.shadowColor = "rgba(0, 0, 0, 0.45)";
+    context.shadowBlur = 22;
+    context.shadowOffsetY = 8;
     context.fillStyle = background;
     context.strokeStyle = accent;
-    context.lineWidth = 4;
+    context.lineWidth = 6;
     context.beginPath();
-    context.roundRect(18, 36, 732, 120, 18);
+    context.roundRect(22, 38, 980, 170, 24);
     context.fill();
     context.stroke();
+    context.shadowColor = "transparent";
     context.fillStyle = accent;
-    context.fillRect(44, 70, 16, 52);
+    context.fillRect(58, 84, 22, 76);
     context.fillStyle = "#ffffff";
-    context.font = "700 42px Arial, Helvetica, sans-serif";
+    context.font = "800 58px Arial, Helvetica, sans-serif";
     context.textBaseline = "middle";
-    context.fillText(text, 82, 98, 620);
+    context.fillText(text, 106, 124, 840);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
