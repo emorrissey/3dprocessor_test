@@ -719,7 +719,7 @@ function ChipScene({
       interactiveTargets.push(hotspot);
 
       const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(0.18, 0.012, 10, 64),
+        new THREE.TorusGeometry(0.23, 0.014, 10, 64),
         new THREE.MeshBasicMaterial({
           color,
           transparent: true,
@@ -733,8 +733,8 @@ function ChipScene({
       interactiveTargets.push(ring);
 
       const label = makeLabelSprite(feature.label, feature.color, "#071126");
-      label.position.copy(position).add(new THREE.Vector3(0, 0.44, 0));
-      label.scale.set(1.48, 0.4, 1);
+      label.position.copy(position).add(new THREE.Vector3(0, 0.58, 0));
+      label.scale.set(1.92, 0.54, 1);
       label.userData.featureId = feature.id;
       root.add(label);
       labelSprites.set(feature.id, label);
@@ -992,15 +992,21 @@ function ChipScene({
           const pulse = 1 + Math.sin(elapsed * 3 + feature.angle) * 0.055;
           const hotspotBase = compactViewport
             ? isActive
-              ? 2.08
+              ? 2.38
               : isFocused
-                ? 1.32
-                : 0.9
+                ? 1.62
+                : 1.08
+            : midViewport
+              ? isActive
+                ? 2.18
+                : isFocused
+                  ? 1.44
+                  : 0.96
             : isActive
-              ? 1.78
+              ? 2.05
               : isFocused
-                ? 1.08
-                : 0.78;
+                ? 1.34
+                : 0.92;
           const targetScale = hotspotBase * pulse;
           hotspot.scale.lerp(
             new THREE.Vector3(targetScale, targetScale, targetScale),
@@ -1017,28 +1023,46 @@ function ChipScene({
             ? 1
             : compactViewport
               ? isFocused
-                ? 0.34
-                : 0.16
+                ? 0.28
+                : 0.14
+              : midViewport
+                ? isFocused
+                  ? 0.64
+                  : 0.24
               : isFocused
-                ? 0.62
-                : 0.18;
-          const labelScale = compactViewport ? (isActive ? 2.44 : 1.62) : 1.48;
-          const activeBoost = isActive ? (compactViewport ? 1.16 : 1.12) : 1;
-          const labelTargetX = compactViewport
-            ? THREE.MathUtils.clamp(feature.position[0] * 0.56, -1.12, 1.12)
-            : feature.position[0];
+                ? 0.74
+                : 0.26;
+          label.renderOrder = isActive ? 30 : isFocused ? 16 : 8;
+          const baseLabelScale = compactViewport ? 1.76 : midViewport ? 2.08 : 2.2;
+          const activeLabelScale = compactViewport ? 3.34 : midViewport ? 3 : 2.86;
+          const labelScale = isActive ? activeLabelScale : baseLabelScale;
+          const activeBoost = isActive ? 1.06 : 1;
+          const labelSpread = compactViewport ? 0.5 : midViewport ? 0.68 : 0.78;
+          const labelClampX = compactViewport ? 1.02 : midViewport ? 1.74 : 2.28;
+          const labelTargetX = THREE.MathUtils.clamp(
+            feature.position[0] * labelSpread,
+            -labelClampX,
+            labelClampX,
+          );
           const labelTargetY =
-            feature.position[1] + (compactViewport ? 0.8 : 0.44);
+            feature.position[1] +
+            (compactViewport
+              ? isActive
+                ? 0.94
+                : 0.78
+              : midViewport
+                ? 0.74
+                : 0.68);
           const labelTargetZ = compactViewport
-            ? feature.position[2] * 0.72
-            : feature.position[2];
+            ? feature.position[2] * 0.66
+            : feature.position[2] * (midViewport ? 0.74 : 0.82);
           label.position.x += (labelTargetX - label.position.x) * 0.1;
           label.position.y += (labelTargetY - label.position.y) * 0.1;
           label.position.z += (labelTargetZ - label.position.z) * 0.1;
           label.scale.lerp(
             new THREE.Vector3(
               labelScale * activeBoost,
-              labelScale * (compactViewport ? 0.31 : 0.27) * activeBoost,
+              labelScale * (compactViewport ? 0.34 : midViewport ? 0.31 : 0.29) * activeBoost,
               1,
             ),
             0.09,
@@ -1301,29 +1325,49 @@ function buildFeatureBlock(
 
 function makeLabelSprite(text: string, accent: string, background: string) {
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 256;
+  canvas.width = 1536;
+  canvas.height = 384;
   const context = canvas.getContext("2d");
 
   if (context) {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.shadowColor = "rgba(0, 0, 0, 0.45)";
-    context.shadowBlur = 22;
-    context.shadowOffsetY = 8;
+    context.shadowColor = "rgba(0, 0, 0, 0.72)";
+    context.shadowBlur = 34;
+    context.shadowOffsetY = 10;
     context.fillStyle = background;
     context.strokeStyle = accent;
-    context.lineWidth = 6;
+    context.lineWidth = 9;
     context.beginPath();
-    context.roundRect(22, 38, 980, 170, 24);
+    context.roundRect(30, 54, 1476, 244, 34);
     context.fill();
+    context.stroke();
+    context.shadowColor = "rgba(0, 0, 0, 0.5)";
+    context.shadowBlur = 12;
+    context.shadowOffsetY = 4;
+    context.strokeStyle = "rgba(255, 255, 255, 0.12)";
+    context.lineWidth = 2;
     context.stroke();
     context.shadowColor = "transparent";
     context.fillStyle = accent;
-    context.fillRect(58, 84, 22, 76);
+    context.fillRect(82, 116, 32, 120);
     context.fillStyle = "#ffffff";
-    context.font = "800 58px Arial, Helvetica, sans-serif";
+    const fontSize = text.length > 24 ? 76 : text.length > 18 ? 84 : 92;
+    context.font = `900 ${fontSize}px Arial, Helvetica, sans-serif`;
     context.textBaseline = "middle";
-    context.fillText(text, 106, 124, 840);
+    context.fillText(text, 148, 176, 1280);
+    context.fillStyle = accent;
+    context.globalAlpha = 0.82;
+    context.beginPath();
+    context.moveTo(1362, 140);
+    context.lineTo(1416, 176);
+    context.lineTo(1362, 212);
+    context.lineTo(1362, 186);
+    context.lineTo(1324, 186);
+    context.lineTo(1324, 166);
+    context.lineTo(1362, 166);
+    context.closePath();
+    context.fill();
+    context.globalAlpha = 1;
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -1333,6 +1377,7 @@ function makeLabelSprite(text: string, accent: string, background: string) {
     transparent: true,
     opacity: 0.72,
     depthTest: false,
+    depthWrite: false,
   });
   return new THREE.Sprite(material);
 }
