@@ -797,6 +797,7 @@ function ChipScene({
     scene.add(particles);
 
     const raycaster = new THREE.Raycaster();
+    raycaster.params.Line = { threshold: 0.16 };
     const pointer = new THREE.Vector2();
     const clock = new THREE.Clock();
     let animationId = 0;
@@ -814,8 +815,8 @@ function ChipScene({
     const rootTargetScale = new THREE.Vector3(1, 1, 1);
 
     const resize = () => {
-      const width = mount.clientWidth;
-      const height = mount.clientHeight;
+      const width = canvas.clientWidth || mount.clientWidth;
+      const height = canvas.clientHeight || mount.clientHeight;
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(height, 1);
       camera.updateProjectionMatrix();
@@ -940,13 +941,14 @@ function ChipScene({
       root.rotation.x += (targetRotationX - root.rotation.x) * 0.075;
       const compactViewport = mount.clientWidth < 560;
       const midViewport = mount.clientWidth >= 560 && mount.clientWidth < 900;
-      const targetScale = compactViewport ? 0.84 : midViewport ? 0.94 : 1;
+      const targetScale = compactViewport ? 0.92 : midViewport ? 0.94 : 1;
+      const compactCameraOffset = compactViewport ? -0.28 : 0;
       rootTargetScale.set(targetScale, targetScale, targetScale);
       root.scale.lerp(rootTargetScale, 0.08);
       camera.position.z +=
-        (cameraTargetZ + (compactViewport ? 1.45 : 0) - camera.position.z) *
+        (cameraTargetZ + compactCameraOffset - camera.position.z) *
         0.08;
-      camera.lookAt(0, 0.26, 0);
+      camera.lookAt(0, compactViewport ? 0.44 : 0.26, 0);
 
       fill.intensity = 22 + Math.sin(elapsed * 1.7) * 4;
       particles.rotation.y += 0.0009;
@@ -988,7 +990,18 @@ function ChipScene({
         );
         if (hotspot) {
           const pulse = 1 + Math.sin(elapsed * 3 + feature.angle) * 0.055;
-          const targetScale = (isActive ? 1.78 : isFocused ? 1.08 : 0.78) * pulse;
+          const hotspotBase = compactViewport
+            ? isActive
+              ? 2.08
+              : isFocused
+                ? 1.32
+                : 0.9
+            : isActive
+              ? 1.78
+              : isFocused
+                ? 1.08
+                : 0.78;
+          const targetScale = hotspotBase * pulse;
           hotspot.scale.lerp(
             new THREE.Vector3(targetScale, targetScale, targetScale),
             0.12,
@@ -1000,13 +1013,32 @@ function ChipScene({
         const label = labelSprites.get(feature.id);
         if (label) {
           const material = label.material as THREE.SpriteMaterial;
-          material.opacity = isActive ? 1 : compactViewport ? 0.18 : isFocused ? 0.62 : 0.18;
-          const labelScale = compactViewport ? 1.22 : 1.48;
-          const activeBoost = isActive ? 1.12 : 1;
+          material.opacity = isActive
+            ? 1
+            : compactViewport
+              ? isFocused
+                ? 0.34
+                : 0.16
+              : isFocused
+                ? 0.62
+                : 0.18;
+          const labelScale = compactViewport ? (isActive ? 2.44 : 1.62) : 1.48;
+          const activeBoost = isActive ? (compactViewport ? 1.16 : 1.12) : 1;
+          const labelTargetX = compactViewport
+            ? THREE.MathUtils.clamp(feature.position[0] * 0.56, -1.12, 1.12)
+            : feature.position[0];
+          const labelTargetY =
+            feature.position[1] + (compactViewport ? 0.8 : 0.44);
+          const labelTargetZ = compactViewport
+            ? feature.position[2] * 0.72
+            : feature.position[2];
+          label.position.x += (labelTargetX - label.position.x) * 0.1;
+          label.position.y += (labelTargetY - label.position.y) * 0.1;
+          label.position.z += (labelTargetZ - label.position.z) * 0.1;
           label.scale.lerp(
             new THREE.Vector3(
               labelScale * activeBoost,
-              labelScale * 0.27 * activeBoost,
+              labelScale * (compactViewport ? 0.31 : 0.27) * activeBoost,
               1,
             ),
             0.09,
